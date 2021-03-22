@@ -1,16 +1,51 @@
-# This is a sample Python script.
+import nltk
+import random
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+BOT_CONFIG = {
+    'intents': {
+        'hello': {
+            'examples': ['Привет!', 'Здравсвуйте!))', 'Хай!!'],
+            'responses': ['Прив!', 'Хеллоу', 'Как жизнь?']
+        },
+        'bye': {
+            'examples': ['Пока!', 'До свиданья!', 'Увидимся!!'],
+            'responses': ['Чао!', 'Будь здоров', 'Сайонара']
+        }
+    },
+    'default_answers': ['Извините, я тупой', 'Переформулируйте, меня еще не обучили']
+}  # "знания" бота
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def cleaner(text):  # функция очистки текста
+    cleaned_text = ''
+    for ch in text.lower():
+        if ch in 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя ':
+            cleaned_text = cleaned_text + ch
+    return cleaned_text
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def match(text, example):  # гибкая функция сравнения текстов
+    return nltk.edit_distance(text, example) / len(example) < 0.4
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+def get_intent(text):  # функция определения интента текста
+    for intent in BOT_CONFIG['intents']:
+        for example in BOT_CONFIG['intents'][intent]['examples']:
+            if match(cleaner(text), cleaner(example)):
+                return intent
+
+
+def bot(text):  # функция бота
+    intent = get_intent(text)  # 1. попытаться понять намерение
+    if intent is not None:
+        return random.choice(
+            BOT_CONFIG['intents'][intent]['responses'])  # 2. если удалось, ответить в соответствии намерением
+    else:
+        return random.choice(BOT_CONFIG['default_answers'])  # 3. если не удалось, ответить заглушкой
+
+
+question = ''
+while question not in ['выход', 'выключайся']:
+    question = input('?-')
+    answer = bot(question)
+    print(answer)
