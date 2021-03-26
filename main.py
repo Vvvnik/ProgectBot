@@ -9,26 +9,36 @@ from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, ExtraTreesCl
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+import logging
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-def cleaner(text): # функция очистки текста
+
+# функция очистки текста
+def cleaner(text):
     cleaned_text = ''
     for ch in text.lower():
         if ch in 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz ':
             cleaned_text = cleaned_text + ch
     return cleaned_text
 
-def match(text, example): # гибкая функция сравнения текстов
+
+# гибкая функция сравнения текстов
+def match(text, example):
     return nltk.edit_distance(text, example) / len(example) < 0.4 if len(example) > 0 else False
 
-def get_intent(text): # функция определения интента текста
-    for intent in BOT_CONFIG['intents']:
-        if 'examples' in BOT_CONFIG['intents'][intent]:
-             for example in BOT_CONFIG['intents'][intent]['examples']:
-                  if match(cleaner(text), cleaner(example)):
-                       return intent
+
+def get_intent(text):  # функция определения интента текста
+    for intent2 in BOT_CONFIG['intents']:
+        if 'examples' in BOT_CONFIG['intents'][intent2]:
+            for example in BOT_CONFIG['intents'][intent2]['examples']:
+                if match(cleaner(text), cleaner(example)):
+                    return intent2
+
 
 with open('content/BIG_BOT_CONFIG.json', 'r') as f:
-    BOT_CONFIG = json.load(f)  # читаем json в переменную BOT_CONFIG
+    # читаем json в переменную BOT_CONFIG
+    BOT_CONFIG = json.load(f)
 
 X = []
 y = []
@@ -37,6 +47,7 @@ for intent in BOT_CONFIG['intents']:
     if 'examples' in BOT_CONFIG['intents'][intent]:
         X += BOT_CONFIG['intents'][intent]['examples']
         y += [intent for i in range(len(BOT_CONFIG['intents'][intent]['examples']))]
+
 
 vectorizer = TfidfVectorizer(preprocessor=cleaner, ngram_range=(1, 3))
 # Создаем векторайзер – объект для превращения текста в вектора
@@ -79,13 +90,6 @@ def bot(text):  # функция бота
 #     question = input()
 #     answer = bot(question)
 #     print(answer)
-
-
-# Enable logging
-import logging
-
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 # Enable logging
 logging.basicConfig(
